@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreeNews</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0a0a0a;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lang-switch {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 4px;
+    background: #161616;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 3px;
+  }
+
+  .lang-switch button {
+    background: none;
+    border: none;
+    color: #777;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .lang-switch button.active {
+    background: #2a2a2a;
+    color: #fff;
+  }
+
+  .container {
+    max-width: 640px;
+    width: 90%;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+
+  h1 .accent { color: #4a9eff; }
+
+  .subtitle {
+    color: #888;
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+
+  input[type="url"] {
+    flex: 1;
+    padding: 14px 16px;
+    border: 1px solid #333;
+    border-radius: 10px;
+    background: #161616;
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input[type="url"]:focus {
+    border-color: #4a9eff;
+  }
+
+  input[type="url"]::placeholder {
+    color: #555;
+  }
+
+  .submit-btn {
+    padding: 14px 24px;
+    border: none;
+    border-radius: 10px;
+    background: #4a9eff;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .submit-btn:hover { background: #3a8eef; }
+  .submit-btn:active { background: #2a7edf; }
+
+  .hint {
+    color: #555;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .history {
+    margin-top: 2.5rem;
+    text-align: left;
+  }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .history h3 {
+    font-size: 0.85rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0;
+  }
+
+  .history-list {
+    list-style: none;
+  }
+
+  .history-list li {
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: background 0.15s;
+  }
+
+  .history-list li:hover { background: #1a1a1a; }
+
+  .history-list a {
+    color: #4a9eff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+
+  .history-list a:hover { text-decoration: underline; }
+
+  .history-list .time {
+    color: #444;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+  }
+
+  .clear-btn {
+    background: none;
+    border: 1px solid #333;
+    color: #666;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .clear-btn:hover { border-color: #555; color: #aaa; }
+</style>
+</head>
+<body>
+
+<div class="lang-switch" id="lang-switch">
+  <button data-lang="en">EN</button>
+  <button data-lang="zh">中文</button>
+</div>
+
+<div class="container">
+  <h1>Free<span class="accent">News</span></h1>
+  <p class="subtitle" data-i18n="subtitle"></p>
+
+  <form id="form">
+    <div class="input-group">
+      <input type="url" id="url-input" required autofocus>
+      <button type="submit" class="submit-btn" data-i18n="submit"></button>
+    </div>
+  </form>
+  <p class="hint" data-i18n="hint"></p>
+
+  <div class="history" id="history-section" hidden>
+    <div class="history-header">
+      <h3 data-i18n="recent"></h3>
+      <button class="clear-btn" id="clear-btn" data-i18n="clear"></button>
+    </div>
+    <ul class="history-list" id="history-list"></ul>
+  </div>
+</div>
+
+<script>
+  const I18N = {
+    en: {
+      title: 'FreeNews',
+      subtitle: 'Paste a paywalled article link to read it free',
+      placeholder: 'https://example.com/paywalled-article',
+      submit: 'Read Now',
+      hint: 'Opens the latest archived snapshot via archive.ph',
+      recent: 'Recent',
+      clear: 'Clear',
+    },
+    zh: {
+      title: 'FreeNews',
+      subtitle: '粘贴付费文章链接，免费阅读全文',
+      placeholder: 'https://example.com/付费文章链接',
+      submit: '立即阅读',
+      hint: '通过 archive.ph 打开最新的存档版本',
+      recent: '最近访问',
+      clear: '清除',
+    },
+  };
+
+  const STORAGE_KEY = 'freenews_history';
+  const LANG_KEY = 'freenews_lang';
+  const MAX_HISTORY = 10;
+
+  const form = document.getElementById('form');
+  const input = document.getElementById('url-input');
+  const historySection = document.getElementById('history-section');
+  const historyList = document.getElementById('history-list');
+  const clearBtn = document.getElementById('clear-btn');
+  const langSwitch = document.getElementById('lang-switch');
+
+  function detectLang() {
+    const saved = localStorage.getItem(LANG_KEY);
+    if (saved && I18N[saved]) return saved;
+    const navLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    return navLang.startsWith('zh') ? 'zh' : 'en';
+  }
+
+  let currentLang = detectLang();
+
+  function applyLang(lang) {
+    currentLang = lang;
+    const dict = I18N[lang];
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    document.title = dict.title;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (dict[key]) el.textContent = dict[key];
+    });
+    input.placeholder = dict.placeholder;
+    langSwitch.querySelectorAll('button').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+    renderHistory();
+  }
+
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function saveHistory(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list.slice(0, MAX_HISTORY)));
+  }
+
+  function addToHistory(url) {
+    const list = getHistory().filter(item => item.url !== url);
+    list.unshift({ url, time: Date.now() });
+    saveHistory(list);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = getHistory();
+    if (list.length === 0) {
+      historySection.hidden = true;
+      return;
+    }
+    historySection.hidden = false;
+    const locale = currentLang === 'zh' ? 'zh-CN' : 'en-US';
+    historyList.innerHTML = list.map(item => {
+      const date = new Date(item.time);
+      const timeStr = date.toLocaleDateString(locale) + ' ' + date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+      return `<li>
+        <a href="#" data-url="${item.url}" title="${item.url}">${item.url}</a>
+        <span class="time">${timeStr}</span>
+      </li>`;
+    }).join('');
+  }
+
+  function openArchive(url) {
+    const archiveUrl = 'https://archive.ph/newest/' + url;
+    window.open(archiveUrl, '_blank');
+    addToHistory(url);
+  }
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const url = input.value.trim();
+    if (!url) return;
+    openArchive(url);
+    input.value = '';
+  });
+
+  historyList.addEventListener('click', function(e) {
+    const link = e.target.closest('a[data-url]');
+    if (!link) return;
+    e.preventDefault();
+    openArchive(link.dataset.url);
+  });
+
+  clearBtn.addEventListener('click', function() {
+    localStorage.removeItem(STORAGE_KEY);
+    renderHistory();
+  });
+
+  langSwitch.addEventListener('click', function(e) {
+    const btn = e.target.closest('button[data-lang]');
+    if (!btn) return;
+    localStorage.setItem(LANG_KEY, btn.dataset.lang);
+    applyLang(btn.dataset.lang);
+  });
+
+  applyLang(currentLang);
+</script>
+
+</body>
+</html>
